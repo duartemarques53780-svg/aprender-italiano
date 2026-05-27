@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Italiano interativo — pronúncia, tradutor, verbos e quiz</title>
+<style>
+  :root {
+    --blue: #2E5B8C; --blue-dark: #1e4470;
+    --bg: #fafafa; --card: #ffffff; --border: #e0e0e0;
+    --hover: #f0f6ff; --it: #b85c00; --pt: #444; --pr: #888;
+    --green: #2e8b57; --orange: #b85c00;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #222; margin: 0; padding: 0; line-height: 1.5; }
+  header { background: var(--blue); color: white; padding: 18px 24px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header .subtitle { color: #cfe0ef; font-style: italic; font-size: 13px; margin-top: 4px; }
+  nav { background: white; border-bottom: 1px solid var(--border); padding: 8px 24px; position: sticky; top: 0; z-index: 100; overflow-x: auto; white-space: nowrap; }
+  nav a { color: var(--blue); text-decoration: none; margin-right: 14px; font-size: 13px; font-weight: 500; padding: 4px 0; display: inline-block; }
+  nav a:hover { text-decoration: underline; }
+  .controls { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin: 20px auto; max-width: 920px; display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .controls label { font-size: 13px; color: #555; }
+  .controls select, .controls input[type=range] { margin-left: 6px; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; }
+  #status { font-size: 12px; color: var(--pr); margin-left: auto; }
+  main { max-width: 920px; margin: 0 auto 60px; padding: 0 20px; }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 18px; scroll-margin-top: 60px; }
+  h2 { color: var(--blue); margin: 0 0 12px; font-size: 20px; border-bottom: 2px solid var(--blue); padding-bottom: 6px; }
+  h3 { color: var(--blue); margin: 16px 0 8px; font-size: 16px; }
+  .row { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 12px; padding: 10px 6px; border-bottom: 1px solid #f0f0f0; align-items: center; cursor: pointer; transition: background 0.15s; }
+  .row:hover { background: var(--hover); }
+  .row:last-child { border-bottom: none; }
+  .pt { color: var(--pt); font-size: 14px; }
+  .it { color: var(--it); font-weight: 600; font-style: italic; font-size: 16px; }
+  .play { background: var(--blue); color: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform 0.1s, background 0.15s; flex-shrink: 0; }
+  .play:hover { background: var(--blue-dark); transform: scale(1.08); }
+  .play.slow { background: var(--orange); }
+  .play.slow:hover { background: #8a4500; }
+  .button-group { display: flex; gap: 6px; }
+  .pronunciation { color: var(--pr); font-size: 12px; font-style: italic; margin-top: 2px; }
+  .it-block { display: flex; flex-direction: column; }
+  .long-phrase { padding: 14px; background: #fffbf0; border-left: 4px solid var(--it); border-radius: 6px; margin: 8px 0; }
+  .long-phrase .it { font-size: 15px; margin-bottom: 8px; }
+  .long-phrase .pt { font-size: 13px; margin-bottom: 8px; }
+  .long-phrase .button-group { margin-top: 8px; }
+  .long-phrase .play { width: auto; border-radius: 6px; padding: 0 14px; height: 34px; font-size: 13px; }
+  .tip { background: #f0f6ff; border-left: 4px solid var(--blue); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 14px; }
+  /* TRANSLATOR */
+  .translator { display: flex; flex-direction: column; gap: 12px; }
+  .translator textarea { width: 100%; min-height: 80px; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; }
+  .translator textarea:focus { outline: none; border-color: var(--blue); }
+  .translator .btn { background: var(--blue); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; align-self: flex-start; }
+  .translator .btn:hover { background: var(--blue-dark); }
+  .translator .btn:disabled { background: #aaa; cursor: not-allowed; }
+  .translation-result { background: #fffbf0; border-left: 4px solid var(--it); border-radius: 6px; padding: 14px; display: none; }
+  .translation-result.visible { display: block; }
+  .translation-result .it { font-size: 16px; margin-bottom: 10px; }
+  .translation-result .button-group { gap: 8px; }
+  .translation-result .play { width: auto; border-radius: 6px; padding: 0 14px; height: 34px; font-size: 13px; }
+  .examples { font-size: 13px; color: var(--pr); margin-top: 8px; }
+  .examples span { display: inline-block; background: #f0f0f0; border-radius: 12px; padding: 3px 10px; margin: 3px 4px 3px 0; cursor: pointer; }
+  .examples span:hover { background: var(--blue); color: white; }
+  /* VERBS */
+  .verb-card { border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; overflow: hidden; }
+  .verb-head { background: #f7f9fc; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+  .verb-head:hover { background: var(--hover); }
+  .verb-head .vname { color: var(--it); font-style: italic; font-weight: 700; font-size: 18px; margin-right: 12px; }
+  .verb-head .vmeaning { color: var(--pt); font-size: 14px; }
+  .verb-head .vtype { background: var(--blue); color: white; border-radius: 12px; padding: 2px 10px; font-size: 11px; margin-left: 8px; }
+  .verb-head .vtype.reg { background: var(--green); }
+  .verb-head .vtype.auto { background: var(--orange); }
+  .verb-head .toggle { color: var(--blue); font-size: 18px; transition: transform 0.2s; }
+  .verb-card.open .toggle { transform: rotate(90deg); }
+  .verb-body { display: none; padding: 14px 16px 18px; }
+  .verb-card.open .verb-body { display: block; }
+  .verb-body .note { background: #fffbf0; border-left: 3px solid var(--orange); padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 12px; color: #555; }
+  .tense-block { margin: 14px 0; }
+  .tense-title { color: var(--blue); font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .tense-title .tense-pt { color: var(--pr); font-weight: normal; font-style: italic; font-size: 12px; }
+  .tense-example { font-size: 12px; color: var(--pr); font-style: italic; margin-bottom: 8px; }
+  .conj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .conj-cell { display: grid; grid-template-columns: 60px 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #eee; border-radius: 6px; background: #fafafa; cursor: pointer; transition: background 0.1s; }
+  .conj-cell:hover { background: var(--hover); }
+  .conj-pers { color: var(--pr); font-size: 12px; font-weight: 600; }
+  .conj-form { color: var(--it); font-weight: 600; font-style: italic; font-size: 14px; }
+  .conj-cell .play { width: 26px; height: 26px; font-size: 11px; }
+  /* SEARCH */
+  .search-box { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; margin: 12px 0 8px; font-family: inherit; }
+  .search-box:focus { outline: none; border-color: var(--blue); }
+  .no-results { background: #fffbf0; border-left: 4px solid var(--orange); padding: 10px 14px; margin: 8px 0; border-radius: 6px; font-size: 13px; color: #555; display: none; }
+  .no-results.visible { display: block; }
+  /* QUIZ */
+  .quiz-modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .quiz-mode-btn { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; color: var(--pt); font-family: inherit; font-weight: 600; line-height: 1.3; }
+  .quiz-mode-btn small { font-weight: normal; color: var(--pr); font-size: 11px; }
+  .quiz-mode-btn:hover { border-color: var(--blue); background: var(--hover); }
+  .quiz-mode-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .quiz-mode-btn.active small { color: #cfe0ef; }
+  .quiz-card { background: #f7f9fc; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 14px 0; display: none; }
+  .quiz-card.active { display: block; }
+  .quiz-progress { display: flex; justify-content: space-between; font-size: 13px; color: var(--pr); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .quiz-progress b { color: var(--blue); }
+  .quiz-question { font-size: 18px; margin: 14px 0; color: var(--pt); font-weight: 500; line-height: 1.4; }
+  .quiz-question .it { font-style: italic; color: var(--it); font-weight: 600; }
+  .quiz-question .label { display: inline-block; background: var(--blue); color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 6px; vertical-align: middle; font-weight: normal; }
+  #qPlayBtn { width: auto; border-radius: 6px; padding: 0 14px; height: 34px; font-size: 13px; margin: 4px 0 8px; }
+  .quiz-options { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 14px 0; }
+  .quiz-option { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 12px 14px; text-align: left; cursor: pointer; font-size: 14px; transition: all 0.15s; font-family: inherit; color: var(--pt); line-height: 1.3; }
+  .quiz-option:hover:not(.disabled) { border-color: var(--blue); background: var(--hover); }
+  .quiz-option.disabled { cursor: default; }
+  .quiz-option.correct { background: #d4edda; border-color: var(--green); color: #155724; font-weight: 600; }
+  .quiz-option.wrong { background: #f8d7da; border-color: #c00; color: #721c24; }
+  .quiz-input { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; margin: 10px 0; }
+  .quiz-input:focus { outline: none; border-color: var(--blue); }
+  .quiz-input.correct { border-color: var(--green); background: #d4edda; }
+  .quiz-input.wrong { border-color: #c00; background: #f8d7da; }
+  .quiz-feedback { padding: 12px 14px; border-radius: 8px; margin: 12px 0; display: none; font-size: 14px; line-height: 1.5; }
+  .quiz-feedback.visible { display: block; }
+  .quiz-feedback.correct { background: #d4edda; border-left: 4px solid var(--green); color: #155724; }
+  .quiz-feedback.wrong { background: #f8d7da; border-left: 4px solid #c00; color: #721c24; }
+  .quiz-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-btn { background: var(--blue); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .quiz-btn:hover { background: var(--blue-dark); }
+  .quiz-btn:disabled { background: #aaa; cursor: not-allowed; }
+  .quiz-btn.secondary { background: #888; }
+  .quiz-btn.secondary:hover { background: #666; }
+  .quiz-final { text-align: center; padding: 20px; }
+  .quiz-final h3 { font-size: 22px; color: var(--blue); margin-bottom: 8px; }
+  .quiz-final .score { font-size: 42px; color: var(--blue); margin: 10px 0; font-weight: 700; }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr auto; }
+    .row .pt { grid-column: 1; }
+    .row .it-block { grid-column: 1; }
+    .row .button-group { grid-column: 2; grid-row: 1 / 3; }
+    .conj-grid { grid-template-columns: 1fr; }
+    .quiz-modes { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Italiano interativo</h1>
+  <div class="subtitle">Pronúncia · Tradutor PT→IT · Verbos · Quiz</div>
+</header>
+
+<nav>
+  <a href="#translator">Tradutor</a>
+  <a href="#greetings">Cumprimentos</a>
+  <a href="#survival">Sobrevivência</a>
+  <a href="#intro">Apresentação</a>
+  <a href="#uci">UCI</a>
+  <a href="#ucPhrases">Frases no serviço</a>
+  <a href="#emailVocab">Email</a>
+  <a href="#numbers">Números</a>
+  <a href="#verbs">Verbos</a>
+  <a href="#quiz">Quiz</a>
+</nav>
+
+<div class="controls">
+  <label>Voz:<select id="voiceSelect"></select></label>
+  <label>Velocidade normal:<input type="range" id="normalRate" min="0.6" max="1.2" step="0.05" value="0.95"><span id="normalRateVal">0.95</span></label>
+  <label>Velocidade devagar:<input type="range" id="slowRate" min="0.4" max="0.9" step="0.05" value="0.65"><span id="slowRateVal">0.65</span></label>
+  <div id="status">A carregar vozes...</div>
+</div>
+
+<main>
+
+<section id="translator">
+  <h2>Tradutor Português → Italiano</h2>
+  <div class="tip">Escreve qualquer frase em português e carrega em <b>Traduzir</b>. Depois clica ▶ para ouvir.</div>
+  <div class="translator">
+    <textarea id="ptInput" placeholder="Ex.: Onde fica a farmácia mais próxima?"></textarea>
+    <button id="translateBtn" class="btn">Traduzir →</button>
+    <div id="translationResult" class="translation-result">
+      <div class="it" id="itOutput"></div>
+      <div class="button-group">
+        <button class="play" id="playNormal">▶ Ouvir</button>
+        <button class="play slow" id="playSlow">🐢 Devagar</button>
+        <button class="play" id="copyBtn" style="background:#888;">⧉ Copiar</button>
+      </div>
+    </div>
+    <div class="examples">
+      Experimenta:
+      <span class="ex">Bom dia, sou médico português</span>
+      <span class="ex">Onde fica a farmácia?</span>
+      <span class="ex">Quanto custa o bilhete de metro?</span>
+      <span class="ex">Pode-me ajudar, por favor?</span>
+      <span class="ex">Estou perdido</span>
+      <span class="ex">Preciso de uma receita médica</span>
+    </div>
+  </div>
+</section>
+
+<section id="greetings"><h2>Cumprimentos e cortesia</h2><div id="greetingsList"></div></section>
+<section id="survival"><h2>Sobrevivência diária</h2><div id="survivalList"></div></section>
+<section id="intro">
+  <h2>Apresentação no hospital</h2>
+  <div class="tip">Frase-chave para o primeiro dia. Pratica com 🐢 (devagar).</div>
+  <div id="introList"></div>
+</section>
+<section id="uci"><h2>Vocabulário UCI / Terapia Intensiva</h2><div id="uciList"></div></section>
+<section id="ucPhrases"><h2>Frases úteis no serviço</h2><div id="ucPhrasesList"></div></section>
+<section id="emailVocab"><h2>Vocabulário do email (saúde ocupacional)</h2><div id="emailVocabList"></div></section>
+<section id="numbers"><h2>Números 1-20</h2><div id="numbersList"></div></section>
+
+<section id="verbs">
+  <h2>Conjugação de verbos</h2>
+  <div class="tip">25 verbos essenciais em 5 tempos verbais. <b>Clica em cada forma</b> para ouvir. Para verbos não listados, escreve no campo de pesquisa: se for regular (-are/-ere/-ire), conjugo automaticamente.</div>
+  <input type="text" id="verbSearch" class="search-box" placeholder="🔍 Procura um verbo (italiano ou português)... ex: parlare, falar, mangiare, comer">
+  <div id="verbNoResult" class="no-results">Nenhum verbo na base. Se for um verbo regular em <b>-are</b>, <b>-ere</b> ou <b>-ire</b>, conjugo automaticamente abaixo.</div>
+  <div id="verbAutoResult"></div>
+  <h3>Quadro geral dos tempos verbais</h3>
+  <div style="font-size:13px; color:#555; line-height:1.7;">
+    <b>Presente</b> — agora, ações habituais. <i>Parlo italiano</i> = falo italiano.<br>
+    <b>Passato prossimo</b> — passado terminado (= pretérito perfeito PT). <i>Ho parlato</i> = falei. Composto com <i>essere/avere + particípio</i>.<br>
+    <b>Imperfetto</b> — passado contínuo/habitual (= imperfeito PT). <i>Parlavo</i> = falava.<br>
+    <b>Futuro</b> — ações futuras. <i>Parlerò</i> = falarei.<br>
+    <b>Condizionale</b> — condicional/cortesia. <i>Vorrei...</i> = queria... <b>Muito usado em italiano formal!</b>
+  </div>
+  <div id="verbsList"></div>
+</section>
+
+<section id="quiz">
+  <h2>Quiz — testa os teus conhecimentos</h2>
+  <div class="tip">Escolhe um modo. 10 perguntas por ronda. Podes sempre ouvir a frase italiana. Se achares que a tua resposta também era válida, podes marcar como certa.</div>
+  <div class="quiz-modes">
+    <button class="quiz-mode-btn" data-mode="mc-pt-it">Múltipla escolha<br><small>PT → IT</small></button>
+    <button class="quiz-mode-btn" data-mode="mc-it-pt">Múltipla escolha<br><small>IT → PT</small></button>
+    <button class="quiz-mode-btn" data-mode="write-pt-it">Escrever em italiano<br><small>traduzir do PT</small></button>
+    <button class="quiz-mode-btn" data-mode="write-it-pt">Escrever em português<br><small>traduzir do IT</small></button>
+  </div>
+  <div id="quizArea">
+    <div id="quizIntro" style="text-align:center; padding:20px; color:#666;">↑ Escolhe um modo acima para começar</div>
+    <div id="quizCard" class="quiz-card">
+      <div class="quiz-progress"><span>Pergunta <b id="qNum">1</b> / 10</span><span>Pontos: <b id="qScore">0</b></span></div>
+      <div class="quiz-question" id="qText"></div>
+      <button class="play" id="qPlayBtn" style="display:none;">▶ Ouvir</button>
+      <div class="quiz-options" id="qOptions"></div>
+      <input type="text" class="quiz-input" id="qInput" placeholder="Escreve a tua resposta..." style="display:none;">
+      <div class="quiz-feedback" id="qFeedback"></div>
+      <div class="quiz-actions" id="qActions">
+        <button class="quiz-btn" id="qConfirm" style="display:none;">Confirmar resposta</button>
+        <button class="quiz-btn" id="qNext" style="display:none;">Próxima →</button>
+        <button class="quiz-btn secondary" id="qIWasRight" style="display:none;">Eu estava certo ↑</button>
+      </div>
+    </div>
+    <div id="quizFinal" class="quiz-card">
+      <div class="quiz-final">
+        <h3 id="qFinalTitle">Resultados</h3>
+        <div class="score" id="qFinalScore">0 / 10</div>
+        <div id="qFinalMsg" style="margin:10px 0; color:#555;"></div>
+        <button class="quiz-btn" id="qRestart">Nova ronda</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const synth = window.speechSynthesis;
+let voices = [], selectedVoice = null, lastTranslation = '';
+const voiceSelect = document.getElementById('voiceSelect');
+const status = document.getElementById('status');
+const normalRate = document.getElementById('normalRate');
+const slowRate = document.getElementById('slowRate');
+const normalRateVal = document.getElementById('normalRateVal');
+const slowRateVal = document.getElementById('slowRateVal');
+normalRate.oninput = () => normalRateVal.textContent = normalRate.value;
+slowRate.oninput = () => slowRateVal.textContent = slowRate.value;
+
+function loadVoices() {
+  voices = synth.getVoices().filter(v => v.lang.toLowerCase().startsWith('it'));
+  voiceSelect.innerHTML = '';
+  if (voices.length === 0) {
+    status.textContent = '⚠ Sem vozes italianas. Windows: Definições→Idioma→Adicionar Italiano. Mac: Acessibilidade→Conteúdo falado→Voz do sistema.';
+    status.style.color = '#c00';
+    return;
+  }
+  voices.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = `${v.name} (${v.lang})`;
+    voiceSelect.appendChild(opt);
+  });
+  selectedVoice = voices[0];
+  status.textContent = `✓ ${voices.length} voz(es) italiana(s)`;
+  status.style.color = '#080';
+}
+voiceSelect.onchange = () => { selectedVoice = voices[voiceSelect.value]; };
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speak(text, slow = false) {
+  if (!selectedVoice) { alert('Sem voz italiana disponível.'); return; }
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = selectedVoice; u.lang = 'it-IT';
+  u.rate = slow ? parseFloat(slowRate.value) : parseFloat(normalRate.value);
+  u.pitch = 1;
+  synth.speak(u);
+}
+
+// === TRADUTOR ===
+const ptInput = document.getElementById('ptInput');
+const translateBtn = document.getElementById('translateBtn');
+const translationResult = document.getElementById('translationResult');
+const itOutput = document.getElementById('itOutput');
+const playNormal = document.getElementById('playNormal');
+const playSlow = document.getElementById('playSlow');
+const copyBtn = document.getElementById('copyBtn');
+
+translateBtn.onclick = async () => {
+  const text = ptInput.value.trim();
+  if (!text) { ptInput.focus(); return; }
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'A traduzir...';
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=pt-PT|it-IT`;
+    const r = await fetch(url);
+    const data = await r.json();
+    const translated = data.responseData && data.responseData.translatedText ? data.responseData.translatedText : 'Erro na tradução';
+    lastTranslation = translated;
+    itOutput.textContent = translated;
+    translationResult.classList.add('visible');
+    setTimeout(() => speak(translated, false), 200);
+  } catch (e) {
+    itOutput.textContent = '⚠ Erro de rede. Verifica a ligação à internet.';
+    translationResult.classList.add('visible');
+  } finally {
+    translateBtn.disabled = false;
+    translateBtn.textContent = 'Traduzir →';
+  }
+};
+ptInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); translateBtn.click(); } });
+playNormal.onclick = () => speak(lastTranslation, false);
+playSlow.onclick = () => speak(lastTranslation, true);
+copyBtn.onclick = () => { navigator.clipboard.writeText(lastTranslation); copyBtn.textContent = '✓'; setTimeout(() => copyBtn.textContent = '⧉ Copiar', 1500); };
+document.querySelectorAll('.examples .ex').forEach(el => { el.onclick = () => { ptInput.value = el.textContent; translateBtn.click(); }; });
+
+// === BUILDERS ===
+function makeRow(pt, it, pron, container) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<div class="pt">${pt}</div><div class="it-block"><div class="it">${it}</div>${pron?`<div class="pronunciation">${pron}</div>`:''}</div><div class="button-group"><button class="play">▶</button><button class="play slow">🐢</button></div>`;
+  const [bN, bS] = row.querySelectorAll('button');
+  bN.onclick = e => { e.stopPropagation(); speak(it, false); };
+  bS.onclick = e => { e.stopPropagation(); speak(it, true); };
+  row.onclick = () => speak(it, false);
+  container.appendChild(row);
+}
+function makeLongPhrase(it, pt, container) {
+  const div = document.createElement('div');
+  div.className = 'long-phrase';
+  div.innerHTML = `<div class="it">${it}</div><div class="pt">${pt}</div><div class="button-group"><button class="play">▶ Ouvir</button><button class="play slow">🐢 Devagar</button></div>`;
+  const [bN, bS] = div.querySelectorAll('button');
+  bN.onclick = () => speak(it, false);
+  bS.onclick = () => speak(it, true);
+  container.appendChild(div);
+}
+
+// === VOCABULARY DATA ===
+const greetings = [
+  ['Bom dia', 'Buongiorno', 'buon-djórno'],
+  ['Boa tarde / boa noite', 'Buonasera', 'buona-séra'],
+  ['Boa noite (ao deitar)', 'Buonanotte', 'buona-nóte'],
+  ['Olá / Adeus (informal)', 'Ciao', 'tchau'],
+  ['Até logo', 'A più tardi', 'a piu tárdi'],
+  ['Até amanhã', 'A domani', 'a dománi'],
+  ['Como está? (formal)', 'Come sta?', 'kóme stá'],
+  ['Como estás? (informal)', 'Come stai?', 'kóme stái'],
+  ['Bem, obrigado', 'Bene, grazie', 'béne grátsie'],
+  ['Por favor', 'Per favore', 'per favóre'],
+  ['Obrigado / Obrigada', 'Grazie', 'grátsie'],
+  ['Muito obrigado', 'Grazie mille', 'grátsie míle'],
+  ['De nada', 'Prego', 'prégo'],
+  ['Desculpe (atenção)', 'Scusi', 'skúzi'],
+  ['Peço desculpa', 'Mi dispiace', 'mi dispiátche'],
+  ['Com licença', 'Permesso', 'perméso'],
+];
+const survival = [
+  ['Sim', 'Sì', 'si'],
+  ['Não', 'No', 'no'],
+  ['Não sei', 'Non lo so', 'non lo so'],
+  ['Não percebi', 'Non ho capito', 'non o kapíto'],
+  ['Pode repetir, por favor?', 'Può ripetere, per favore?', 'puó ripétere per favóre'],
+  ['Mais devagar, por favor', 'Più lentamente, per favore', 'piu lentaménte per favóre'],
+  ['Fala inglês?', 'Parla inglese?', 'párla ingléze'],
+  ['Eu não falo italiano', 'Non parlo italiano', 'non párlo italiáno'],
+  ['Estou a aprender italiano', "Sto imparando l'italiano", 'sto imparándo litaliáno'],
+  ['Como se diz...?', 'Come si dice...?', 'kóme si dítche'],
+  ['O que significa?', 'Che cosa significa?', 'ke kóza sinhífika'],
+  ['Tudo bem', 'Va bene', 'va béne'],
+  ['Onde fica...?', "Dov'è...?", 'dové'],
+  ['Quanto custa?', 'Quanto costa?', 'kuánto kósta'],
+  ['Tenho fome', 'Ho fame', 'o fáme'],
+  ['Tenho sede', 'Ho sete', 'o séte'],
+  ['Estou cansado', 'Sono stanco', 'sóno stánko'],
+];
+const intro = [
+  ["Buongiorno, sono Duarte, sono un medico portoghese.", "Bom dia, sou o Duarte, sou médico português."],
+  ["Sto facendo un tirocinio qui in Terapia Intensiva.", "Estou a fazer um estágio aqui na UCI."],
+  ["Non parlo ancora bene l'italiano, ma sto imparando.", "Ainda não falo bem italiano, mas estou a aprender."],
+  ["Per favore, parlate lentamente con me.", "Por favor, falem devagar comigo."],
+  ["Buongiorno, sono Duarte, sono un medico portoghese. Sto facendo un tirocinio qui in Terapia Intensiva. Non parlo ancora bene l'italiano, ma sto imparando. Per favore, parlate lentamente con me.", "→ FRASE COMPLETA"],
+];
+const uci = [
+  ['Médico', 'Il medico', 'il médiko'],
+  ['Médica (Dra.)', 'La dottoressa', 'la dotoréssa'],
+  ['Enfermeiro', "L'infermiere", 'linfermiére'],
+  ['Enfermeira', "L'infermiera", 'linfermiéra'],
+  ['Doente / paciente', 'Il paziente', 'il patsiénte'],
+  ['Família do doente', 'I familiari', 'i familiári'],
+  ['Hospital', "L'ospedale", 'lospedále'],
+  ['UCI', 'La Terapia Intensiva', 'la terapía intensíva'],
+  ['Reanimação', 'La Rianimazione', 'la rianimatsióne'],
+  ['Urgências', 'Il Pronto Soccorso', 'il prónto sokórso'],
+  ['Bloco operatório', 'La sala operatoria', 'la sála operatória'],
+  ['Quarto / sala', 'La stanza', 'la stántsa'],
+  ['Cama', 'Il letto', 'il léto'],
+  ['Turno', 'Il turno', 'il túrno'],
+  ['Passagem de turno', 'La consegna', 'la konsénha'],
+  ['Ronda médica', 'Il giro visite', 'il djíro vízite'],
+  ['Hoje', 'Oggi', 'ódji'],
+  ['Amanhã', 'Domani', 'dománi'],
+  ['Ontem', 'Ieri', 'iéri'],
+];
+const ucPhrases = [
+  ['A que horas é a passagem de turno?', 'A che ora è la consegna?', 'a ke óra é la konsénha'],
+  ['Posso ajudar?', 'Posso aiutare?', 'póso aiutáre'],
+  ['Onde está a cama três?', "Dov'è il letto numero tre?", 'dové il léto número tre'],
+  ['Pode-me explicar, por favor?', 'Mi può spiegare, per favore?', 'mi puó spiegáre per favóre'],
+  ['Não percebi, pode repetir?', 'Non ho capito, può ripetere?', 'non o kapíto, puó ripétere'],
+  ['Quem é o médico responsável?', 'Chi è il medico responsabile?', 'ki é il médiko responsábile'],
+  ['Onde fica a casa de banho?', "Dov'è il bagno?", 'dové il bánho'],
+  ['Onde fica o vestiário?', "Dov'è lo spogliatoio?", 'dové lo spolha-tóio'],
+  ['Tenho uma pergunta', 'Ho una domanda', 'o úna dománda'],
+  ['Posso ver o doente?', 'Posso vedere il paziente?', 'póso vedére il patsiénte'],
+];
+const emailVocab = [
+  ['Dê-me algumas horas', 'Mi dia qualche ora di tempo', 'mi día kuálke óra di témpo'],
+  ['Medicina do trabalho', 'Sorveglianza sanitaria', 'sorvelhántsa sanitária'],
+  ['Interno de especialidade', 'Specializzando', 'spetchialitsándo'],
+  ['Em breve', 'A breve', 'a bréve'],
+  ['Formulário', 'Modulo', 'módulo'],
+  ['Assinar', 'Firmare', 'firmáre'],
+  ['Serviço (hospitalar)', 'Reparto', 'repárto'],
+  ['Frequentar (estagiar)', 'Frequentare', 'frekuentáre'],
+  ['Exames obrigatórios', 'Screening obbligatori', 'skríning obligatóri'],
+  ['Digitalizar', 'Scansionare', 'skansionáre'],
+  ['Reenviar', 'Rinviare', 'rinviáre'],
+  ['Peço desculpa pelo incómodo', 'Mi spiace per la problematica', 'mi spiátche per la problemátika'],
+  ['Diga-me', 'Mi faccia sapere', 'mi fátcha sapére'],
+  ['Ao dispor', 'A disposizione', 'a dispozitsióne'],
+  ['Um cordial cumprimento', 'Un caro saluto', 'un káro salúto'],
+];
+const numbers = [
+  ['1', 'uno', 'úno'], ['2', 'due', 'dúe'], ['3', 'tre', 'tre'], ['4', 'quattro', 'kuátro'],
+  ['5', 'cinque', 'tchínkue'], ['6', 'sei', 'sei'], ['7', 'sette', 'séte'], ['8', 'otto', 'óto'],
+  ['9', 'nove', 'nóve'], ['10', 'dieci', 'diétchi'], ['11', 'undici', 'únditchi'],
+  ['12', 'dodici', 'dóditchi'], ['13', 'tredici', 'tréditchi'], ['14', 'quattordici', 'kuatórditchi'],
+  ['15', 'quindici', 'kuínditchi'], ['16', 'sedici', 'séditchi'], ['17', 'diciassette', 'ditchasséte'],
+  ['18', 'diciotto', 'ditchóto'], ['19', 'diciannove', 'ditchanóve'], ['20', 'venti', 'vénti'],
+];
+
+// === VERBS DATA ===
+const persons = ['io', 'tu', 'lui/lei', 'noi', 'voi', 'loro'];
+const verbs = [
+  { name: 'essere', meaning: 'ser / estar', type: 'irregular',
+    note: 'O verbo mais importante. Usa-se também como auxiliar do passado para verbos de movimento e estado.',
+    tenses: {
+      'Presente': ['sono','sei','è','siamo','siete','sono'],
+      'Passato prossimo': ['sono stato','sei stato','è stato','siamo stati','siete stati','sono stati'],
+      'Imperfetto': ['ero','eri','era','eravamo','eravate','erano'],
+      'Futuro': ['sarò','sarai','sarà','saremo','sarete','saranno'],
+      'Condizionale': ['sarei','saresti','sarebbe','saremmo','sareste','sarebbero'],
+    },
+    examples: { 'Presente': 'Sono medico = Sou médico', 'Passato prossimo': 'Sono stato in ospedale = Estive no hospital', 'Imperfetto': 'Ero stanco = Estava cansado', 'Futuro': 'Sarò lì alle 8 = Estarei lá às 8', 'Condizionale': 'Sarei felice di aiutare = Ficaria contente em ajudar' }
+  },
+  { name: 'avere', meaning: 'ter', type: 'irregular',
+    note: 'Auxiliar do passado para a maioria dos verbos. Atenção: "ho", "hai", "ha", "hanno" o H é mudo.',
+    tenses: {
+      'Presente': ['ho','hai','ha','abbiamo','avete','hanno'],
+      'Passato prossimo': ['ho avuto','hai avuto','ha avuto','abbiamo avuto','avete avuto','hanno avuto'],
+      'Imperfetto': ['avevo','avevi','aveva','avevamo','avevate','avevano'],
+      'Futuro': ['avrò','avrai','avrà','avremo','avrete','avranno'],
+      'Condizionale': ['avrei','avresti','avrebbe','avremmo','avreste','avrebbero'],
+    },
+    examples: { 'Presente': 'Ho fame = Tenho fome', 'Passato prossimo': 'Ho avuto un problema = Tive um problema', 'Imperfetto': 'Avevo 30 anni = Tinha 30 anos', 'Futuro': 'Avrò tempo domani = Terei tempo amanhã', 'Condizionale': 'Avrei una domanda = Teria uma pergunta' }
+  },
+  { name: 'fare', meaning: 'fazer', type: 'irregular',
+    note: 'Usa-se também em expressões idiomáticas: fare colazione (tomar pequeno-almoço), fare attenzione (ter cuidado).',
+    tenses: {
+      'Presente': ['faccio','fai','fa','facciamo','fate','fanno'],
+      'Passato prossimo': ['ho fatto','hai fatto','ha fatto','abbiamo fatto','avete fatto','hanno fatto'],
+      'Imperfetto': ['facevo','facevi','faceva','facevamo','facevate','facevano'],
+      'Futuro': ['farò','farai','farà','faremo','farete','faranno'],
+      'Condizionale': ['farei','faresti','farebbe','faremmo','fareste','farebbero'],
+    },
+    examples: { 'Presente': 'Faccio il medico = Sou médico (de profissão)', 'Passato prossimo': 'Ho fatto un esame = Fiz um exame', 'Imperfetto': 'Facevo il turno di notte = Fazia o turno da noite', 'Futuro': 'Farò un giro = Farei uma ronda', 'Condizionale': 'Cosa faresti? = O que farias?' }
+  },
+  { name: 'stare', meaning: 'estar / ficar', type: 'irregular',
+    note: 'Para estado físico/emocional (come stai? = como estás?). "Sto + gerúndio" = forma progressiva: sto imparando = estou a aprender.',
+    tenses: {
+      'Presente': ['sto','stai','sta','stiamo','state','stanno'],
+      'Passato prossimo': ['sono stato','sei stato','è stato','siamo stati','siete stati','sono stati'],
+      'Imperfetto': ['stavo','stavi','stava','stavamo','stavate','stavano'],
+      'Futuro': ['starò','starai','starà','staremo','starete','staranno'],
+      'Condizionale': ['starei','staresti','starebbe','staremmo','stareste','starebbero'],
+    },
+    examples: { 'Presente': 'Sto bene = Estou bem; Sto imparando = Estou a aprender', 'Passato prossimo': 'Sono stato male = Estive mal/doente', 'Imperfetto': 'Stavo dormendo = Estava a dormir', 'Futuro': 'Starò attento = Estarei atento', 'Condizionale': 'Starei meglio a casa = Estaria melhor em casa' }
+  },
+  { name: 'andare', meaning: 'ir', type: 'irregular',
+    note: 'Auxiliar essere no passado: sono andato (fui). Atenção à concordância: sono andata (mulher).',
+    tenses: {
+      'Presente': ['vado','vai','va','andiamo','andate','vanno'],
+      'Passato prossimo': ['sono andato','sei andato','è andato','siamo andati','siete andati','sono andati'],
+      'Imperfetto': ['andavo','andavi','andava','andavamo','andavate','andavano'],
+      'Futuro': ['andrò','andrai','andrà','andremo','andrete','andranno'],
+      'Condizionale': ['andrei','andresti','andrebbe','andremmo','andreste','andrebbero'],
+    },
+    examples: { 'Presente': 'Vado al lavoro = Vou para o trabalho', 'Passato prossimo': 'Sono andato a casa = Fui para casa', 'Imperfetto': 'Andavo spesso in palestra = Ia muitas vezes ao ginásio', 'Futuro': 'Andrò a Roma = Irei a Roma', 'Condizionale': 'Andrei volentieri = Iria com prazer' }
+  },
+  { name: 'venire', meaning: 'vir', type: 'irregular',
+    note: 'Auxiliar essere. Muito usada para confirmar presença: vieni? = vens?',
+    tenses: {
+      'Presente': ['vengo','vieni','viene','veniamo','venite','vengono'],
+      'Passato prossimo': ['sono venuto','sei venuto','è venuto','siamo venuti','siete venuti','sono venuti'],
+      'Imperfetto': ['venivo','venivi','veniva','venivamo','venivate','venivano'],
+      'Futuro': ['verrò','verrai','verrà','verremo','verrete','verranno'],
+      'Condizionale': ['verrei','verresti','verrebbe','verremmo','verreste','verrebbero'],
+    },
+    examples: { 'Presente': 'Vengo subito = Vou já', 'Passato prossimo': 'Sono venuto in macchina = Vim de carro', 'Imperfetto': 'Venivo sempre qui = Vinha sempre cá', 'Futuro': 'Verrò domani = Virei amanhã', 'Condizionale': 'Verrei se potessi = Viria se pudesse' }
+  },
+  { name: 'potere', meaning: 'poder / conseguir', type: 'irregular',
+    note: 'Verbo modal. Seguido de infinitivo: posso aiutare = posso ajudar.',
+    tenses: {
+      'Presente': ['posso','puoi','può','possiamo','potete','possono'],
+      'Passato prossimo': ['ho potuto','hai potuto','ha potuto','abbiamo potuto','avete potuto','hanno potuto'],
+      'Imperfetto': ['potevo','potevi','poteva','potevamo','potevate','potevano'],
+      'Futuro': ['potrò','potrai','potrà','potremo','potrete','potranno'],
+      'Condizionale': ['potrei','potresti','potrebbe','potremmo','potreste','potrebbero'],
+    },
+    examples: { 'Presente': 'Posso entrare? = Posso entrar?', 'Passato prossimo': 'Non ho potuto venire = Não pude vir', 'Imperfetto': 'Non potevo parlare = Não podia falar', 'Futuro': 'Potrò aiutare domani = Poderei ajudar amanhã', 'Condizionale': 'Potrebbe ripetere? = Poderia repetir? (formal)' }
+  },
+  { name: 'dovere', meaning: 'dever / ter de', type: 'irregular',
+    note: 'Verbo modal de obrigação. Devo andare = tenho de ir.',
+    tenses: {
+      'Presente': ['devo','devi','deve','dobbiamo','dovete','devono'],
+      'Passato prossimo': ['ho dovuto','hai dovuto','ha dovuto','abbiamo dovuto','avete dovuto','hanno dovuto'],
+      'Imperfetto': ['dovevo','dovevi','doveva','dovevamo','dovevate','dovevano'],
+      'Futuro': ['dovrò','dovrai','dovrà','dovremo','dovrete','dovranno'],
+      'Condizionale': ['dovrei','dovresti','dovrebbe','dovremmo','dovreste','dovrebbero'],
+    },
+    examples: { 'Presente': 'Devo andare = Tenho de ir', 'Passato prossimo': 'Ho dovuto aspettare = Tive de esperar', 'Imperfetto': 'Dovevo studiare = Tinha de estudar', 'Futuro': 'Dovrò chiamarlo = Terei de o chamar', 'Condizionale': 'Dovresti riposare = Devias descansar' }
+  },
+  { name: 'volere', meaning: 'querer', type: 'irregular',
+    note: 'Verbo modal. ATENÇÃO: "voglio" é demasiado direto. Usa o condicional "vorrei" (queria) em vez disso!',
+    tenses: {
+      'Presente': ['voglio','vuoi','vuole','vogliamo','volete','vogliono'],
+      'Passato prossimo': ['ho voluto','hai voluto','ha voluto','abbiamo voluto','avete voluto','hanno voluto'],
+      'Imperfetto': ['volevo','volevi','voleva','volevamo','volevate','volevano'],
+      'Futuro': ['vorrò','vorrai','vorrà','vorremo','vorrete','vorranno'],
+      'Condizionale': ['vorrei','vorresti','vorrebbe','vorremmo','vorreste','vorrebbero'],
+    },
+    examples: { 'Presente': 'Voglio dormire = Quero dormir', 'Passato prossimo': 'Ha voluto parlare con te = Ele/Ela quis falar contigo', 'Imperfetto': 'Volevo solo aiutare = Só queria ajudar', 'Futuro': 'Vorrò sapere tutto = Vou querer saber tudo', 'Condizionale': 'Vorrei un caffè = Queria um café (FORMA POLIDA!)' }
+  },
+  { name: 'sapere', meaning: 'saber (factos, idiomas)', type: 'irregular',
+    note: 'Para factos/competências. "So nuotare" = sei nadar. Diferente de "conoscere" (conhecer pessoas/lugares).',
+    tenses: {
+      'Presente': ['so','sai','sa','sappiamo','sapete','sanno'],
+      'Passato prossimo': ['ho saputo','hai saputo','ha saputo','abbiamo saputo','avete saputo','hanno saputo'],
+      'Imperfetto': ['sapevo','sapevi','sapeva','sapevamo','sapevate','sapevano'],
+      'Futuro': ['saprò','saprai','saprà','sapremo','saprete','sapranno'],
+      'Condizionale': ['saprei','sapresti','saprebbe','sapremmo','sapreste','saprebbero'],
+    },
+    examples: { 'Presente': 'Non lo so = Não sei', 'Passato prossimo': 'Ho saputo la notizia ieri = Soube a notícia ontem', 'Imperfetto': 'Sapevo che era difficile = Sabia que era difícil', 'Futuro': 'Saprò domani = Saberei amanhã', 'Condizionale': 'Sapresti dirmi...? = Saberias dizer-me...?' }
+  },
+  { name: 'capire', meaning: 'perceber / compreender', type: 'regular -ire (isc)', typeClass: 'reg',
+    note: 'Verbo regular em -ire mas com infixo "-isc-" no presente (1ª, 2ª, 3ª e 6ª pessoas). Atenção: noi/voi NÃO levam isc.',
+    tenses: {
+      'Presente': ['capisco','capisci','capisce','capiamo','capite','capiscono'],
+      'Passato prossimo': ['ho capito','hai capito','ha capito','abbiamo capito','avete capito','hanno capito'],
+      'Imperfetto': ['capivo','capivi','capiva','capivamo','capivate','capivano'],
+      'Futuro': ['capirò','capirai','capirà','capiremo','capirete','capiranno'],
+      'Condizionale': ['capirei','capiresti','capirebbe','capiremmo','capireste','capirebbero'],
+    },
+    examples: { 'Presente': 'Non capisco = Não percebo', 'Passato prossimo': 'Non ho capito = Não percebi (MUITO usado)', 'Imperfetto': 'Non capivo niente = Não percebia nada', 'Futuro': 'Capirò con il tempo = Perceberei com o tempo', 'Condizionale': 'Capirei meglio se... = Perceberia melhor se...' }
+  },
+  { name: 'parlare', meaning: 'falar', type: 'regular -are', typeClass: 'reg',
+    note: 'Verbo regular em -are. Padrão para muitos outros: lavorare, studiare, mangiare.',
+    tenses: {
+      'Presente': ['parlo','parli','parla','parliamo','parlate','parlano'],
+      'Passato prossimo': ['ho parlato','hai parlato','ha parlato','abbiamo parlato','avete parlato','hanno parlato'],
+      'Imperfetto': ['parlavo','parlavi','parlava','parlavamo','parlavate','parlavano'],
+      'Futuro': ['parlerò','parlerai','parlerà','parleremo','parlerete','parleranno'],
+      'Condizionale': ['parlerei','parleresti','parlerebbe','parleremmo','parlereste','parlerebbero'],
+    },
+    examples: { 'Presente': 'Parlo italiano = Falo italiano', 'Passato prossimo': 'Ho parlato con il dottore = Falei com o médico', 'Imperfetto': 'Parlavo al telefono = Estava a falar ao telefone', 'Futuro': 'Parlerò più piano = Falarei mais devagar', 'Condizionale': 'Vorrei parlare con... = Queria falar com...' }
+  },
+  { name: 'prendere', meaning: 'tomar / pegar / apanhar', type: 'irregular (passado)',
+    note: 'Regular no presente mas particípio irregular: preso. Muito usado: prendere il caffè, prendere la metro.',
+    tenses: {
+      'Presente': ['prendo','prendi','prende','prendiamo','prendete','prendono'],
+      'Passato prossimo': ['ho preso','hai preso','ha preso','abbiamo preso','avete preso','hanno preso'],
+      'Imperfetto': ['prendevo','prendevi','prendeva','prendevamo','prendevate','prendevano'],
+      'Futuro': ['prenderò','prenderai','prenderà','prenderemo','prenderete','prenderanno'],
+      'Condizionale': ['prenderei','prenderesti','prenderebbe','prenderemmo','prendereste','prenderebbero'],
+    },
+    examples: { 'Presente': 'Prendo un caffè = Tomo um café', 'Passato prossimo': 'Ho preso la medicina = Tomei o medicamento', 'Imperfetto': "Prendevo l'autobus = Apanhava o autocarro", 'Futuro': 'Prenderò il treno = Apanharei o comboio', 'Condizionale': "Prenderei un'acqua = Aceitava uma água" }
+  },
+  { name: 'dare', meaning: 'dar', type: 'irregular',
+    note: 'Atenção: "dà" (3ª pessoa) leva acento para distinguir de "da" (preposição).',
+    tenses: {
+      'Presente': ['do','dai','dà','diamo','date','danno'],
+      'Passato prossimo': ['ho dato','hai dato','ha dato','abbiamo dato','avete dato','hanno dato'],
+      'Imperfetto': ['davo','davi','dava','davamo','davate','davano'],
+      'Futuro': ['darò','darai','darà','daremo','darete','daranno'],
+      'Condizionale': ['darei','daresti','darebbe','daremmo','dareste','darebbero'],
+    },
+    examples: { 'Presente': 'Mi dai una mano? = Dás-me uma mão?', 'Passato prossimo': 'Ho dato la medicina = Dei o medicamento', 'Imperfetto': 'Davo sempre una mancia = Dava sempre uma gorjeta', 'Futuro': 'Ti darò la risposta = Dar-te-ei a resposta', 'Condizionale': 'Mi daresti il numero? = Dar-me-ias o número?' }
+  },
+  { name: 'dire', meaning: 'dizer', type: 'irregular',
+    note: 'Particípio: detto. "Come si dice...?" = como se diz...?',
+    tenses: {
+      'Presente': ['dico','dici','dice','diciamo','dite','dicono'],
+      'Passato prossimo': ['ho detto','hai detto','ha detto','abbiamo detto','avete detto','hanno detto'],
+      'Imperfetto': ['dicevo','dicevi','diceva','dicevamo','dicevate','dicevano'],
+      'Futuro': ['dirò','dirai','dirà','diremo','direte','diranno'],
+      'Condizionale': ['direi','diresti','direbbe','diremmo','direste','direbbero'],
+    },
+    examples: { 'Presente': 'Cosa dici? = O que dizes?', 'Passato prossimo': 'Ho detto la verità = Disse a verdade', 'Imperfetto': 'Dicevo sempre di sì = Dizia sempre que sim', 'Futuro': 'Lo dirò al medico = Di-lo-ei ao médico', 'Condizionale': 'Direi di no = Diria que não' }
+  },
+  { name: 'vedere', meaning: 'ver', type: 'irregular',
+    note: 'Particípio: visto (irregular). Futuro encurta para vedrò (não vederò).',
+    tenses: {
+      'Presente': ['vedo','vedi','vede','vediamo','vedete','vedono'],
+      'Passato prossimo': ['ho visto','hai visto','ha visto','abbiamo visto','avete visto','hanno visto'],
+      'Imperfetto': ['vedevo','vedevi','vedeva','vedevamo','vedevate','vedevano'],
+      'Futuro': ['vedrò','vedrai','vedrà','vedremo','vedrete','vedranno'],
+      'Condizionale': ['vedrei','vedresti','vedrebbe','vedremmo','vedreste','vedrebbero'],
+    },
+    examples: { 'Presente': 'Vedo il paziente = Vejo o doente', 'Passato prossimo': 'Ho visto il dottore = Vi o médico', 'Imperfetto': 'Vedevo sempre dottori = Via médicos sempre', 'Futuro': 'Vedrò domani = Verei amanhã', 'Condizionale': 'Vorrei vedere = Queria ver' }
+  },
+  { name: 'mettere', meaning: 'pôr / colocar', type: 'irregular (passado)',
+    note: 'Particípio: messo (irregular). Outras formas são regulares.',
+    tenses: {
+      'Presente': ['metto','metti','mette','mettiamo','mettete','mettono'],
+      'Passato prossimo': ['ho messo','hai messo','ha messo','abbiamo messo','avete messo','hanno messo'],
+      'Imperfetto': ['mettevo','mettevi','metteva','mettevamo','mettevate','mettevano'],
+      'Futuro': ['metterò','metterai','metterà','metteremo','metterete','metteranno'],
+      'Condizionale': ['metterei','metteresti','metterebbe','metteremmo','mettereste','metterebbero'],
+    },
+    examples: { 'Presente': 'Metto la flebo = Coloco o soro', 'Passato prossimo': 'Ho messo il catetere = Coloquei o cateter', 'Imperfetto': 'Mettevo gli occhiali = Punha os óculos', 'Futuro': 'Metterò una nota = Vou pôr uma nota', 'Condizionale': 'Metterei più zucchero = Punha mais açúcar' }
+  },
+  { name: 'chiedere', meaning: 'pedir / perguntar', type: 'irregular (passado)',
+    note: 'Particípio: chiesto. Cuidado: pronuncia-se "kiédere" (CH = K duro).',
+    tenses: {
+      'Presente': ['chiedo','chiedi','chiede','chiediamo','chiedete','chiedono'],
+      'Passato prossimo': ['ho chiesto','hai chiesto','ha chiesto','abbiamo chiesto','avete chiesto','hanno chiesto'],
+      'Imperfetto': ['chiedevo','chiedevi','chiedeva','chiedevamo','chiedevate','chiedevano'],
+      'Futuro': ['chiederò','chiederai','chiederà','chiederemo','chiederete','chiederanno'],
+      'Condizionale': ['chiederei','chiederesti','chiederebbe','chiederemmo','chiedereste','chiederebbero'],
+    },
+    examples: { 'Presente': 'Chiedo aiuto = Peço ajuda', 'Passato prossimo': 'Ho chiesto al medico = Perguntei ao médico', 'Imperfetto': 'Chiedevo sempre = Perguntava sempre', 'Futuro': 'Chiederò domani = Perguntarei amanhã', 'Condizionale': 'Vorrei chiederle... = Queria perguntar-lhe... (formal)' }
+  },
+  { name: 'bere', meaning: 'beber', type: 'muito irregular',
+    note: 'Vem do latim "bibere" — daí as formas com "bev-". Particípio: bevuto. Futuro/condicional duplicam o R.',
+    tenses: {
+      'Presente': ['bevo','bevi','beve','beviamo','bevete','bevono'],
+      'Passato prossimo': ['ho bevuto','hai bevuto','ha bevuto','abbiamo bevuto','avete bevuto','hanno bevuto'],
+      'Imperfetto': ['bevevo','bevevi','beveva','bevevamo','bevevate','bevevano'],
+      'Futuro': ['berrò','berrai','berrà','berremo','berrete','berranno'],
+      'Condizionale': ['berrei','berresti','berrebbe','berremmo','berreste','berrebbero'],
+    },
+    examples: { 'Presente': 'Bevo molta acqua = Bebo muita água', 'Passato prossimo': 'Ho bevuto un caffè = Bebi um café', 'Imperfetto': 'Bevevo poco = Bebia pouco', 'Futuro': "Berrò un'aranciata = Vou beber uma laranjada", 'Condizionale': 'Berrei volentieri = Bebia com prazer' }
+  },
+  { name: 'dormire', meaning: 'dormir', type: 'regular -ire', typeClass: 'reg',
+    note: 'Verbo regular em -ire SEM "-isc-" (diferente de capire/finire). Padrão para sentire, partire, aprire, offrire.',
+    tenses: {
+      'Presente': ['dormo','dormi','dorme','dormiamo','dormite','dormono'],
+      'Passato prossimo': ['ho dormito','hai dormito','ha dormito','abbiamo dormito','avete dormito','hanno dormito'],
+      'Imperfetto': ['dormivo','dormivi','dormiva','dormivamo','dormivate','dormivano'],
+      'Futuro': ['dormirò','dormirai','dormirà','dormiremo','dormirete','dormiranno'],
+      'Condizionale': ['dormirei','dormiresti','dormirebbe','dormiremmo','dormireste','dormirebbero'],
+    },
+    examples: { 'Presente': 'Il paziente dorme = O doente dorme', 'Passato prossimo': 'Ho dormito 4 ore = Dormi 4 horas', 'Imperfetto': 'Dormivo male = Dormia mal', 'Futuro': 'Dormirò di più domani = Dormirei mais amanhã', 'Condizionale': 'Dormirei tutto il giorno = Dormia o dia todo' }
+  },
+  { name: 'sentire', meaning: 'sentir / ouvir', type: 'regular -ire', typeClass: 'reg',
+    note: 'Regular em -ire SEM "-isc-". Importante no hospital: sente dolore? = sente dor?',
+    tenses: {
+      'Presente': ['sento','senti','sente','sentiamo','sentite','sentono'],
+      'Passato prossimo': ['ho sentito','hai sentito','ha sentito','abbiamo sentito','avete sentito','hanno sentito'],
+      'Imperfetto': ['sentivo','sentivi','sentiva','sentivamo','sentivate','sentivano'],
+      'Futuro': ['sentirò','sentirai','sentirà','sentiremo','sentirete','sentiranno'],
+      'Condizionale': ['sentirei','sentiresti','sentirebbe','sentiremmo','sentireste','sentirebbero'],
+    },
+    examples: { 'Presente': 'Sente dolore? = Sente dor? (formal)', 'Passato prossimo': 'Ho sentito un rumore = Ouvi um ruído', 'Imperfetto': 'Sentivo male = Sentia-me mal', 'Futuro': 'Sentirò il medico = Vou ouvir/consultar o médico', 'Condizionale': 'Sentirei volentieri = Ouviria com prazer' }
+  },
+  { name: 'finire', meaning: 'acabar / terminar', type: 'regular -ire (isc)', typeClass: 'reg',
+    note: 'Regular em -ire COM "-isc-" (como capire, preferire, pulire).',
+    tenses: {
+      'Presente': ['finisco','finisci','finisce','finiamo','finite','finiscono'],
+      'Passato prossimo': ['ho finito','hai finito','ha finito','abbiamo finito','avete finito','hanno finito'],
+      'Imperfetto': ['finivo','finivi','finiva','finivamo','finivate','finivano'],
+      'Futuro': ['finirò','finirai','finirà','finiremo','finirete','finiranno'],
+      'Condizionale': ['finirei','finiresti','finirebbe','finiremmo','finireste','finirebbero'],
+    },
+    examples: { 'Presente': 'Il turno finisce alle 8 = O turno acaba às 8', 'Passato prossimo': 'Ho finito il giro = Acabei a ronda', 'Imperfetto': 'Finivo sempre tardi = Acabava sempre tarde', 'Futuro': 'Finirò presto = Acabarei cedo', 'Condizionale': 'Finirei prima = Acabaria mais cedo' }
+  },
+  { name: 'mangiare', meaning: 'comer', type: 'regular -are', typeClass: 'reg',
+    note: 'Regular -are mas com regra ortográfica: o i da raiz mangia- desaparece antes de e ou i (mangi não mangii; mangerò não mangierò).',
+    tenses: {
+      'Presente': ['mangio','mangi','mangia','mangiamo','mangiate','mangiano'],
+      'Passato prossimo': ['ho mangiato','hai mangiato','ha mangiato','abbiamo mangiato','avete mangiato','hanno mangiato'],
+      'Imperfetto': ['mangiavo','mangiavi','mangiava','mangiavamo','mangiavate','mangiavano'],
+      'Futuro': ['mangerò','mangerai','mangerà','mangeremo','mangerete','mangeranno'],
+      'Condizionale': ['mangerei','mangeresti','mangerebbe','mangeremmo','mangereste','mangerebbero'],
+    },
+    examples: { 'Presente': 'Mangio alle 13 = Como às 13h', 'Passato prossimo': 'Ho mangiato la pasta = Comi massa', 'Imperfetto': 'Mangiavo in mensa = Comia na cantina', 'Futuro': 'Mangerò più tardi = Comerei mais tarde', 'Condizionale': 'Mangerei una pizza = Comia uma pizza' }
+  },
+  { name: 'arrivare', meaning: 'chegar', type: 'regular -are (aux essere)', typeClass: 'reg',
+    note: 'Regular -are mas usa "essere" no passado composto. Concorda em género e número.',
+    tenses: {
+      'Presente': ['arrivo','arrivi','arriva','arriviamo','arrivate','arrivano'],
+      'Passato prossimo': ['sono arrivato','sei arrivato','è arrivato','siamo arrivati','siete arrivati','sono arrivati'],
+      'Imperfetto': ['arrivavo','arrivavi','arrivava','arrivavamo','arrivavate','arrivavano'],
+      'Futuro': ['arriverò','arriverai','arriverà','arriveremo','arriverete','arriveranno'],
+      'Condizionale': ['arriverei','arriveresti','arriverebbe','arriveremmo','arrivereste','arriverebbero'],
+    },
+    examples: { 'Presente': 'Il treno arriva alle 10 = O comboio chega às 10', 'Passato prossimo': 'Sono arrivato adesso = Cheguei agora', 'Imperfetto': 'Arrivavo sempre puntuale = Chegava sempre a horas', 'Futuro': 'Arriverò più tardi = Chegarei mais tarde', 'Condizionale': 'Arriverei prima se... = Chegaria mais cedo se...' }
+  },
+  { name: 'uscire', meaning: 'sair', type: 'irregular',
+    note: 'Muda a raiz no presente: esc- (formas tónicas) e usc- (átonas). Auxiliar essere.',
+    tenses: {
+      'Presente': ['esco','esci','esce','usciamo','uscite','escono'],
+      'Passato prossimo': ['sono uscito','sei uscito','è uscito','siamo usciti','siete usciti','sono usciti'],
+      'Imperfetto': ['uscivo','uscivi','usciva','uscivamo','uscivate','uscivano'],
+      'Futuro': ['uscirò','uscirai','uscirà','usciremo','uscirete','usciranno'],
+      'Condizionale': ['uscirei','usciresti','uscirebbe','usciremmo','uscireste','uscirebbero'],
+    },
+    examples: { 'Presente': 'Esco dal lavoro = Saio do trabalho', 'Passato prossimo': 'Sono uscito tardi = Saí tarde', 'Imperfetto': 'Uscivo ogni sera = Saía todas as noites', 'Futuro': 'Uscirò alle 19 = Sairei às 19h', 'Condizionale': 'Uscirei volentieri = Saía com prazer' }
+  },
+];
+const tensesPT = { 'Presente': 'Presente', 'Passato prossimo': 'Pretérito Perfeito', 'Imperfetto': 'Imperfeito', 'Futuro': 'Futuro', 'Condizionale': 'Condicional' };
+
+// === BUILD STATIC CONTENT ===
+greetings.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('greetingsList')));
+survival.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('survivalList')));
+intro.forEach(([it, pt]) => makeLongPhrase(it, pt, document.getElementById('introList')));
+uci.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('uciList')));
+ucPhrases.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('ucPhrasesList')));
+emailVocab.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('emailVocabList')));
+numbers.forEach(([pt, it, pr]) => makeRow(pt, it, pr, document.getElementById('numbersList')));
+
+// === VERB CARDS ===
+function buildVerbCard(v, isAuto = false) {
+  const card = document.createElement('div');
+  card.className = 'verb-card';
+  card.dataset.name = v.name.toLowerCase();
+  card.dataset.meaning = v.meaning.toLowerCase();
+  const typeClass = v.typeClass || (isAuto ? 'auto' : '');
+  card.innerHTML = `
+    <div class="verb-head">
+      <div>
+        <span class="vname">${v.name}</span>
+        <span class="vmeaning">— ${v.meaning}</span>
+        <span class="vtype ${typeClass}">${v.type}</span>
+      </div>
+      <span class="toggle">▶</span>
+    </div>
+    <div class="verb-body"></div>`;
+  const head = card.querySelector('.verb-head');
+  const body = card.querySelector('.verb-body');
+  head.onclick = () => card.classList.toggle('open');
+  if (v.note) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.innerHTML = v.note;
+    body.appendChild(note);
+  }
+  Object.entries(v.tenses).forEach(([tenseName, forms]) => {
+    const block = document.createElement('div');
+    block.className = 'tense-block';
+    const title = document.createElement('div');
+    title.className = 'tense-title';
+    title.innerHTML = `<span>${tenseName}</span><span class="tense-pt">${tensesPT[tenseName] || ''}</span>`;
+    block.appendChild(title);
+    if (v.examples && v.examples[tenseName]) {
+      const ex = document.createElement('div');
+      ex.className = 'tense-example';
+      ex.textContent = '↳ ' + v.examples[tenseName];
+      block.appendChild(ex);
+    }
+    const grid = document.createElement('div');
+    grid.className = 'conj-grid';
+    forms.forEach((form, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'conj-cell';
+      cell.innerHTML = `<span class="conj-pers">${persons[i]}</span><span class="conj-form">${form}</span><button class="play">▶</button>`;
+      const btn = cell.querySelector('button');
+      btn.onclick = e => { e.stopPropagation(); speak(form, false); };
+      cell.onclick = () => speak(form, false);
+      grid.appendChild(cell);
+    });
+    block.appendChild(grid);
+    body.appendChild(block);
+  });
+  return card;
+}
+
+const verbsContainer = document.getElementById('verbsList');
+verbs.forEach(v => verbsContainer.appendChild(buildVerbCard(v)));
+
+// === VERB SEARCH + AUTO-CONJUGATION ===
+const verbSearch = document.getElementById('verbSearch');
+const verbNoResult = document.getElementById('verbNoResult');
+const verbAutoResult = document.getElementById('verbAutoResult');
+
+function conjugateRegular(infinitive, useIsc) {
+  const inf = infinitive.toLowerCase().trim();
+  let ending, stem;
+  if (inf.endsWith('are')) { ending = 'are'; stem = inf.slice(0, -3); }
+  else if (inf.endsWith('ere')) { ending = 'ere'; stem = inf.slice(0, -3); }
+  else if (inf.endsWith('ire')) { ending = 'ire'; stem = inf.slice(0, -3); }
+  else return null;
+  let presente, ppPart, impEnds, futStem;
+  if (ending === 'are') {
+    presente = [stem+'o', stem+'i', stem+'a', stem+'iamo', stem+'ate', stem+'ano'];
+    ppPart = stem + 'ato';
+    impEnds = ['avo','avi','ava','avamo','avate','avano'].map(e => stem + e);
+    futStem = stem + 'er';
+  } else if (ending === 'ere') {
+    presente = [stem+'o', stem+'i', stem+'e', stem+'iamo', stem+'ete', stem+'ono'];
+    ppPart = stem + 'uto';
+    impEnds = ['evo','evi','eva','evamo','evate','evano'].map(e => stem + e);
+    futStem = stem + 'er';
+  } else {
+    if (useIsc) {
+      presente = [stem+'isco', stem+'isci', stem+'isce', stem+'iamo', stem+'ite', stem+'iscono'];
+    } else {
+      presente = [stem+'o', stem+'i', stem+'e', stem+'iamo', stem+'ite', stem+'ono'];
+    }
+    ppPart = stem + 'ito';
+    impEnds = ['ivo','ivi','iva','ivamo','ivate','ivano'].map(e => stem + e);
+    futStem = stem + 'ir';
+  }
+  const futuro = [futStem+'ò', futStem+'ai', futStem+'à', futStem+'emo', futStem+'ete', futStem+'anno'];
+  const cond = [futStem+'ei', futStem+'esti', futStem+'ebbe', futStem+'emmo', futStem+'este', futStem+'ebbero'];
+  const pp = ['ho','hai','ha','abbiamo','avete','hanno'].map(a => a + ' ' + ppPart);
+  return {
+    name: inf,
+    meaning: '(conjugação automática)',
+    type: 'auto: -' + ending + (ending==='ire' && useIsc ? ' (isc)' : ''),
+    note: '⚠ <b>Conjugação automática</b> baseada em regras regulares. Verbos irregulares (especialmente em -ere) podem ter formas diferentes — verifica numa fonte fiável se for um verbo crítico. Particípio assumido: <i>' + ppPart + '</i>.',
+    tenses: { 'Presente': presente, 'Passato prossimo': pp, 'Imperfetto': impEnds, 'Futuro': futuro, 'Condizionale': cond }
+  };
+}
+
+verbSearch.addEventListener('input', () => {
+  const q = verbSearch.value.toLowerCase().trim();
+  const cards = verbsContainer.querySelectorAll('.verb-card');
+  let foundAny = false;
+  cards.forEach(card => {
+    const name = card.dataset.name;
+    const meaning = card.dataset.meaning;
+    const match = !q || name.includes(q) || meaning.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) foundAny = true;
+  });
+  verbAutoResult.innerHTML = '';
+  if (!foundAny && q && /^[a-zàèéìòù]+e$/i.test(q) && (q.endsWith('are') || q.endsWith('ere') || q.endsWith('ire'))) {
+    verbNoResult.classList.remove('visible');
+    const autoConj = conjugateRegular(q, false);
+    if (autoConj) {
+      const card = buildVerbCard(autoConj, true);
+      card.classList.add('open');
+      verbAutoResult.appendChild(card);
+      if (q.endsWith('ire')) {
+        const iscConj = conjugateRegular(q, true);
+        iscConj.type = 'auto: -ire (com isc)';
+        iscConj.note = '⚠ <b>Conjugação automática</b> assumindo <b>tipo -isc-</b> (como capire/finire). Se for sem isc (como dormire), usa a versão acima.';
+        const iscCard = buildVerbCard(iscConj, true);
+        iscCard.classList.add('open');
+        verbAutoResult.appendChild(iscCard);
+      }
+    }
+  } else if (!foundAny && q) {
+    verbNoResult.classList.add('visible');
+  } else {
+    verbNoResult.classList.remove('visible');
+  }
+});
+
+// === QUIZ ===
+const quizPool = [
+  ...greetings.map(r => [r[0], r[1]]),
+  ...survival.map(r => [r[0], r[1]]),
+  ...uci.map(r => [r[0], r[1]]),
+  ...ucPhrases.map(r => [r[0], r[1]]),
+  ...emailVocab.map(r => [r[0], r[1]]),
+  ...numbers.map(r => [r[0], r[1]]),
+];
+
+const QUIZ_LEN = 10;
+let quizState = { mode: null, questions: [], idx: 0, score: 0, answered: false };
+
+const qModeBtns = document.querySelectorAll('.quiz-mode-btn');
+const quizIntro = document.getElementById('quizIntro');
+const quizCard = document.getElementById('quizCard');
+const quizFinal = document.getElementById('quizFinal');
+const qNum = document.getElementById('qNum');
+const qScore = document.getElementById('qScore');
+const qText = document.getElementById('qText');
+const qPlayBtn = document.getElementById('qPlayBtn');
+const qOptions = document.getElementById('qOptions');
+const qInput = document.getElementById('qInput');
+const qFeedback = document.getElementById('qFeedback');
+const qConfirm = document.getElementById('qConfirm');
+const qNext = document.getElementById('qNext');
+const qIWasRight = document.getElementById('qIWasRight');
+const qFinalScore = document.getElementById('qFinalScore');
+const qFinalMsg = document.getElementById('qFinalMsg');
+const qFinalTitle = document.getElementById('qFinalTitle');
+const qRestart = document.getElementById('qRestart');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function normalize(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[.,!?;:()'"…]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function startQuiz(mode) {
+  quizState.mode = mode;
+  quizState.questions = shuffle(quizPool).slice(0, QUIZ_LEN);
+  quizState.idx = 0;
+  quizState.score = 0;
+  quizState.answered = false;
+  qModeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  quizIntro.style.display = 'none';
+  quizFinal.classList.remove('active');
+  quizCard.classList.add('active');
+  qInput.disabled = false;
+  showQuestion();
+}
+
+function showQuestion() {
+  quizState.answered = false;
+  qFeedback.classList.remove('visible', 'correct', 'wrong');
+  qConfirm.style.display = 'none';
+  qNext.style.display = 'none';
+  qIWasRight.style.display = 'none';
+  qInput.value = '';
+  qInput.disabled = false;
+  qInput.classList.remove('correct', 'wrong');
+  qOptions.innerHTML = '';
+  qNum.textContent = quizState.idx + 1;
+  qScore.textContent = quizState.score;
+
+  const [pt, it] = quizState.questions[quizState.idx];
+  const isMC = quizState.mode.startsWith('mc');
+  const isPtToIt = quizState.mode.endsWith('-pt-it');
+  const question = isPtToIt ? pt : it;
+  const correct = isPtToIt ? it : pt;
+
+  qText.innerHTML = isPtToIt
+    ? '<span class="label">PT → IT</span>Como se diz: <b>' + question + '</b>?'
+    : '<span class="label">IT → PT</span>O que significa: <b class="it">' + question + '</b>?';
+
+  if (!isPtToIt) {
+    qPlayBtn.style.display = 'inline-flex';
+    qPlayBtn.onclick = () => speak(question, false);
+  } else {
+    qPlayBtn.style.display = 'none';
+  }
+
+  if (isMC) {
+    const wrongPool = quizPool
+      .filter(r => (isPtToIt ? r[1] : r[0]) !== correct)
+      .map(r => isPtToIt ? r[1] : r[0]);
+    const wrong = shuffle([...new Set(wrongPool)]).slice(0, 3);
+    const all = shuffle([correct, ...wrong]);
+    qInput.style.display = 'none';
+    qOptions.style.display = 'grid';
+    all.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      btn.onclick = () => {
+        if (quizState.answered) return;
+        quizState.answered = true;
+        const allBtns = qOptions.querySelectorAll('.quiz-option');
+        allBtns.forEach(b => {
+          b.classList.add('disabled');
+          if (b.textContent === correct) b.classList.add('correct');
+          else if (b === btn) b.classList.add('wrong');
+        });
+        const isRight = opt === correct;
+        if (isRight) quizState.score++;
+        qScore.textContent = quizState.score;
+        showFeedback(isRight, correct, opt, isPtToIt);
+      };
+      qOptions.appendChild(btn);
+    });
+  } else {
+    qOptions.style.display = 'none';
+    qInput.style.display = 'block';
+    qInput.placeholder = isPtToIt ? 'Escreve em italiano...' : 'Escreve em português...';
+    qConfirm.style.display = 'inline-block';
+    setTimeout(() => qInput.focus(), 100);
+  }
+}
+
+function showFeedback(isRight, correct, given, isPtToIt) {
+  qFeedback.classList.add('visible');
+  qFeedback.classList.add(isRight ? 'correct' : 'wrong');
+  if (isRight) {
+    qFeedback.innerHTML = '✓ <b>Certo!</b> <i>' + correct + '</i>';
+  } else {
+    qFeedback.innerHTML = '✗ <b>Resposta certa:</b> <i>' + correct + '</i><br><small>Tua resposta: ' + given + '</small>';
+    qIWasRight.style.display = 'inline-block';
+  }
+  const it = isPtToIt ? correct : (quizState.questions[quizState.idx][1]);
+  setTimeout(() => speak(it, false), 300);
+  qNext.style.display = 'inline-block';
+  qNext.focus();
+}
+
+qConfirm.onclick = () => {
+  if (quizState.answered) return;
+  const given = qInput.value.trim();
+  if (!given) { qInput.focus(); return; }
+  const [pt, it] = quizState.questions[quizState.idx];
+  const isPtToIt = quizState.mode.endsWith('-pt-it');
+  const correct = isPtToIt ? it : pt;
+  const isRight = normalize(given) === normalize(correct);
+  quizState.answered = true;
+  qInput.disabled = true;
+  if (isRight) {
+    quizState.score++;
+    qInput.classList.add('correct');
+  } else {
+    qInput.classList.add('wrong');
+  }
+  qScore.textContent = quizState.score;
+  qConfirm.style.display = 'none';
+  showFeedback(isRight, correct, given, isPtToIt);
+};
+
+qInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !quizState.answered) qConfirm.click();
+  else if (e.key === 'Enter' && quizState.answered) qNext.click();
+});
+
+qIWasRight.onclick = () => {
+  if (!quizState.answered) return;
+  quizState.score++;
+  qScore.textContent = quizState.score;
+  qIWasRight.style.display = 'none';
+  qFeedback.classList.remove('wrong');
+  qFeedback.classList.add('correct');
+  qFeedback.innerHTML = '✓ Marcado como certo (a tua resposta também é válida).';
+};
+
+qNext.onclick = () => {
+  quizState.idx++;
+  qInput.disabled = false;
+  if (quizState.idx >= QUIZ_LEN) {
+    showFinal();
+  } else {
+    showQuestion();
+  }
+};
+
+function showFinal() {
+  quizCard.classList.remove('active');
+  quizFinal.classList.add('active');
+  qFinalScore.textContent = quizState.score + ' / ' + QUIZ_LEN;
+  const pct = quizState.score / QUIZ_LEN;
+  let title, msg;
+  if (pct === 1) { title = '🏆 Perfeito!'; msg = 'Bravissimo! Conseguiste a pontuação máxima.'; }
+  else if (pct >= 0.8) { title = '🎉 Muito bom!'; msg = 'Quase perfeito. Estás a dominar bem.'; }
+  else if (pct >= 0.6) { title = '👍 Bom!'; msg = 'Bom resultado. Revê o que falhaste e tenta de novo.'; }
+  else if (pct >= 0.4) { title = '📚 Continua'; msg = 'Estás no caminho. Revê o vocabulário e tenta outra ronda.'; }
+  else { title = '💪 Não desistas'; msg = 'Vai rever as secções de vocabulário e volta a tentar.'; }
+  qFinalTitle.textContent = title;
+  qFinalMsg.textContent = msg;
+}
+
+qRestart.onclick = () => startQuiz(quizState.mode);
+qModeBtns.forEach(btn => btn.onclick = () => startQuiz(btn.dataset.mode));
+</script>
+
+</body>
+</html>
